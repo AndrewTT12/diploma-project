@@ -22,3 +22,6 @@ terraform/.terraform.lock.hcl
 # ========================
 Docs/
 readme
+
+*.json
+terraform/auth.json

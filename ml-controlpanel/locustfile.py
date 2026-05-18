@@ -26,13 +26,11 @@ class MLOpsModelLoadTest(HttpUser):
         """
         Основний таск: відправка зображення на мікросервіс комп'ютерного зору.
         """
-        # Формуємо multipart/form-data запит із кешованих байтів
         payload = {"file": (self.image_filename, self.image_bytes, "image/jpeg")}
         
-        # Відправляємо POST-запити на ендпоінт нашого FastAPI додатку
+
         with self.client.post("/predict", files=payload, catch_response=True) as response:
             if response.status_code == 200:
-                # Додатково можна перевірити, що прийшов саме JSON з очікуваними ключами
                 try:
                     result = response.json()
                     if "status" in result and "inference_time_seconds" in result:

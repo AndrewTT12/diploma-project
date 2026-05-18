@@ -93,7 +93,8 @@ resource "google_container_node_pool" "heavy_pool" {
   node_count = 1
 
   node_config {
-    machine_type = var.machine_type_heavy_pool
+    # Custom 6 vCPU, 16 GB RAM
+    machine_type = "e2-custom-6-16384"
     
     # Залишаємо taint для ізоляції важких навантажень
     taint {

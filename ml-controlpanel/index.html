@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>My dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 flex justify-between items-center shadow-xl">
+            <div>
+                <h1 class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+                    My Dashboard
+                </h1>
+                <p class="text-slate-400 text-sm">Керування та моніторинг системою</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="http://localhost:30030" target="_blank" class="bg-orange-600 hover:bg-orange-700 text-xs font-bold py-2 px-4 rounded transition">Grafana 📊</a>
+                <a href="http://localhost:8089" target="_blank" class="bg-lime-600 hover:bg-lime-700 text-xs font-bold py-2 px-4 rounded transition">Locust 🐜</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg h-fit">
+                <h2 class="text-xl font-bold mb-4 text-blue-400 border-b border-slate-700 pb-2">⚙️ Керування К8s</h2>
+                <form id="configForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Модель</label>
+                        <select name="model_type" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200">
+                            <option value="yolo">YOLOv8-Medium</option>
+                            <option value="mobilenet">MobileNetV3-Small</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">CPU Limit</label>
+                        <select name="cpu_limit" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200">
+                            <option value="0.5">0.5 vCPU</option>
+                            <option value="1">1.0 vCPU</option>
+                            <option value="2">2.0 vCPU</option>
+                            <option value="4">4.0 vCPU</option>
+                            <option value="6">6.0 vCPU</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">RAM Limit</label>
+                        <select name="memory_limit" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-sm text-slate-200">
+                            <option value="1Gi">1 GiB</option>
+                            <option value="2Gi">2 GiB</option>
+                            <option value="4Gi">4 GiB</option>
+                            <option value="8Gi">8 GiB</option>
+                            <option value="16Gi">16 GiB</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 px-4 rounded transition text-sm">
+                        Передеплоїти Кластер
+                    </button>
+                </form>
+                <div id="resultBox" class="mt-4 p-3 bg-slate-900 rounded border border-slate-700 text-xs font-mono hidden"></div>
+            </div>
+
+            <div class="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4 text-emerald-400 border-b border-slate-700 pb-2">📈 Показники в Реальному Часі</h2>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 text-center">
+                            <p class="text-xs text-slate-400 font-medium uppercase">Locust RPS</p>
+                            <p id="metricRps" class="text-2xl font-black text-blue-400 mt-1">0.0</p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 text-center">
+                            <p class="text-xs text-slate-400 font-medium uppercase">Failures</p>
+                            <p id="metricFails" class="text-2xl font-black text-rose-500 mt-1">0%</p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 text-center">
+                            <p class="text-xs text-slate-400 font-medium uppercase">Latency (Avg)</p>
+                            <p id="metricLatency" class="text-2xl font-black text-amber-400 mt-1">0 ms</p>
+                        </div>
+                        <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 text-center">
+                            <p class="text-xs text-slate-400 font-medium uppercase">CPU Throttling</p>
+                            <p id="metricThrottling" class="text-2xl font-black text-purple-400 mt-1">0%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 space-y-2">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Стан Контейнера з Prometheus API</h3>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-400">Поточна утилізація CPU:</span>
+                        <span id="k8sCpuUsage" class="font-mono text-slate-200 font-bold">Завантаження...</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2">
+                        <div id="cpuBar" class="bg-blue-500 h-2 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+            <div class="flex justify-between items-center mb-4 border-b border-slate-700 pb-2">
+                <h2 class="text-xl font-bold text-purple-400">📝 Live Pod Terminal</h2>
+                <span class="flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-purple-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                </span>
+            </div>
+            <div class="bg-black p-4 rounded-lg border border-slate-700 h-64 overflow-y-auto">
+                <pre id="podLogs" class="text-green-400 font-mono text-xs whitespace-pre-wrap">Очікування логів...</pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('configForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultBox = document.getElementById('resultBox');
+            resultBox.classList.remove('hidden');
+            resultBox.innerText = "⏳ Оновлення конфігурації GKE...";
+            
+            const response = await fetch('/configure', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
+            });
+            const res = await response.json();
+            resultBox.innerText = res.status === 'success' ? `✅ ${res.details}` : `❌ ${res.message}`;
+            document.getElementById('podLogs').innerText = "Контейнер перезапускається. Очікування нових логів...";
+        });
+
+        async function updateMetrics() {
+            try {
+                const response = await fetch('/api/metrics');
+                const data = await response.json();
+                
+                document.getElementById('metricRps').innerText = data.locust_rps;
+                document.getElementById('metricFails').innerText = data.locust_fail_ratio + '%';
+                document.getElementById('metricLatency').innerText = data.locust_avg_latency + ' ms';
+                document.getElementById('metricThrottling').innerText = data.k8s_cpu_throttling + '%';
+                document.getElementById('k8sCpuUsage').innerText = data.k8s_cpu_usage + ' Cores';
+                
+                const percent = Math.min((parseFloat(data.k8s_cpu_usage) / 6) * 100, 100); // Змінено базу на 6 ядер для прогресбару
+                document.getElementById('cpuBar').style.width = percent + '%';
+            } catch (e) {}
+        }
+
+        async function updateLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+                const logContainer = document.getElementById('podLogs');
+                
+                const isAtBottom = logContainer.parentElement.scrollHeight - logContainer.parentElement.scrollTop <= logContainer.parentElement.clientHeight + 20;
+                logContainer.innerText = data.logs;
+                if (isAtBottom) {
+                    logContainer.parentElement.scrollTop = logContainer.parentElement.scrollHeight;
+                }
+            } catch (e) {}
+        }
+
+        setInterval(updateMetrics, 2000);
+        setInterval(updateLogs, 3000);
+    </script>
+</body>
+</html>
