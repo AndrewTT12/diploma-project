@@ -10,8 +10,8 @@ NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="
 
 helm install kube-prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
-  --set grafana.nodeSelector."cloud.google.com/gke-nodepool"=cpu-pool \
-  --set prometheus.prometheusSpec.nodeSelector."cloud.google.com/gke-nodepool"=cpu-pool \
+  --set grafana.nodeSelector.cloud\.google\.com/gke-nodepool=cpu-pool \
+  --set prometheus.prometheusSpec.nodeSelector.cloud\.google\.com/gke-nodepool=cpu-pool \
   --set grafana.service.type=NodePort \
   --set grafana.service.nodePort=30030 \
   --set prometheus.service.type=NodePort \

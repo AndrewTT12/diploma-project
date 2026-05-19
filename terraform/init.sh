@@ -27,7 +27,20 @@ echo "=== 6. Cloning repository ==="
 REPO_URL="https://github.com/AndrewTT12/diploma-project.git"
 
 git clone $REPO_URL /home/ubuntu/diploma-project
-chown -R ubuntu:ubuntu /home/ubuntu/diploma-project
-chmod +x /home/ubuntu/diploma-project/manager-panel/*.sh || true
 
+echo "Завантаження тестового датасету COCO128..."
+cd /home/ubuntu/diploma-project/ml-controlpanel
+
+sudo apt-get install unzip -y
+wget -q https://github.com/ultralytics/yolov5/releases/download/v1.0/coco128.zip
+unzip -q coco128.zip
+
+mkdir -p dataset
+mv coco128/images/train2017/* dataset/
+rm -rf coco128 coco128.zip
+
+echo "Датасет успішно підготовлено!"
+
+chown -R ubuntu:ubuntu /home/ubuntu/diploma-project
+chmod +x /home/ubuntu/diploma-project/ml-controlpanel/*.sh || true
 echo "=== Done ==="
