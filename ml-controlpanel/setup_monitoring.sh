@@ -1,24 +1,42 @@
 #!/bin/bash
 set -e
 echo "=== Розгортання Prometheus та Grafana ==="
+
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
+
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 
-# Дізнаємось внутрішній IP для NodePort
 NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+
+# Створюємо тимчасовий values файл
+cat > /tmp/monitoring-values.yaml <<EOF
+grafana:
+  nodeSelector:
+    cloud.google.com/gke-nodepool: cpu-pool
+  service:
+    type: NodePort
+    nodePort: 30030
+  grafana.ini:
+    security:
+      allow_embedding: true
+    auth:
+      anonymous:
+        enabled: true
+        org_role: Admin
+
+prometheus:
+  prometheusSpec:
+    nodeSelector:
+      cloud.google.com/gke-nodepool: cpu-pool
+  service:
+    type: NodePort
+    nodePort: 30090
+EOF
 
 helm install kube-prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
-  --set grafana.nodeSelector.cloud\.google\.com/gke-nodepool=cpu-pool \
-  --set prometheus.prometheusSpec.nodeSelector.cloud\.google\.com/gke-nodepool=cpu-pool \
-  --set grafana.service.type=NodePort \
-  --set grafana.service.nodePort=30030 \
-  --set prometheus.service.type=NodePort \
-  --set prometheus.service.nodePort=30090 \
-  --set grafana."grafana\.ini".security.allow_embedding=true \
-  --set grafana."grafana\.ini".auth.anonymous.enabled=true \
-  --set grafana."grafana\.ini".auth.anonymous.org_role=Admin
+  -f /tmp/monitoring-values.yaml
 
 echo "========================================================"
 echo "Моніторинг розгорнуто! Внутрішній IP ноди: $NODE_IP"
